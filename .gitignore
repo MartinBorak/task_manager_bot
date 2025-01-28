@@ -1,0 +1,6 @@
+.DS_Store
+.idea/
+.pytest_cache/
+.python-version
+.envrc
+.env
