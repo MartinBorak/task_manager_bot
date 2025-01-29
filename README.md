@@ -1,1 +1,1 @@
-discord bot
+Discord task manager bot
