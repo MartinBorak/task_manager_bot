@@ -2,7 +2,7 @@ import json
 import os
 from datetime import datetime
 
-from discord import Embed, Intents, Interaction, Member
+from discord import Embed, HTTPException, Intents, Interaction, Member, NotFound
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -29,14 +29,39 @@ def save_tasks(tasks: dict) -> None:
         json.dump(tasks, file, indent=4)
 
 
-def get_member_name(interaction: Interaction, task: dict) -> str:
-    return interaction.guild.get_member(task["member"]).name
-
-
 async def send(
-    interaction: Interaction, message: str | None = None, embed: Embed | None = None
+    interaction: Interaction,
+    message: str | None = None,
+    embed: Embed | None = None,
+    ephemeral: bool = False,
 ) -> None:
-    await interaction.response.send_message(content=message, embed=embed)
+    await interaction.response.send_message(
+        content=message,
+        embed=embed,
+        ephemeral=ephemeral,
+    )
+
+
+async def get_member(interaction: Interaction, task: dict) -> Member | None:
+    member_id = task["member"]
+    member = interaction.guild.get_member(member_id)
+
+    if not member:
+        try:
+            member = await interaction.guild.fetch_member(member_id)
+        except NotFound:
+            await send(interaction, "Member not found.", ephemeral=True)
+            return
+        except HTTPException:
+            await send(interaction, "Failed to fetch the member.", ephemeral=True)
+            return
+
+    return member
+
+
+async def get_member_name(interaction: Interaction, task: dict) -> str:
+    member = await get_member(interaction, task)
+    return member.name if member else "?"
 
 
 @bot.tree.command(name="addtask", description="Add a task with a deadline.")
@@ -84,7 +109,7 @@ async def move_task(interaction: Interaction, task_name: str, new_status: str) -
                 save_tasks(tasks)
                 await send(
                     interaction,
-                    f"✅ Úloha '{task_name}' ({get_member_name(interaction, task)}) presunutá do sekcie {new_status}.",
+                    f"✅ Úloha '{task_name}' ({await get_member_name(interaction, task)}) presunutá do sekcie {new_status}.",
                 )
                 return
     await send(
@@ -101,11 +126,12 @@ async def list_tasks(interaction: Interaction) -> None:
     """
     tasks = load_tasks()
     embed = Embed(title="📋 Úlohy", color=0x00FF00)
+
     for section, section_tasks in tasks.items():
         task_list = (
             "\n".join(
                 [
-                    f"- {get_member_name(interaction, task)}: {task['task']} (do {task['deadline']})"
+                    f"- {await get_member_name(interaction, task)}: {task['task']} (do {task['deadline']})"
                     for task in section_tasks
                 ]
             )
@@ -129,7 +155,7 @@ async def remove_task(interaction: Interaction, task_name: str) -> None:
                 save_tasks(tasks)
                 await send(
                     interaction,
-                    f"🗑️ Úloha '{task_name}' ({get_member_name(interaction, task)}) bola vymazaná.",
+                    f"🗑️ Úloha '{task_name}' ({await get_member_name(interaction, task)}) bola vymazaná.",
                 )
                 return
     await send(
