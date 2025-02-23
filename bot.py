@@ -57,7 +57,7 @@ async def add_task(
 
     await send(
         interaction,
-        f"✅ Task {task.id} ({task_name}) added for '{member.mention}' with a deadline: {deadline}.",
+        f"✅ Task {task.id} ({task_name}) added for {member.mention} with a deadline: {deadline}.",
     )
 
 
@@ -91,7 +91,7 @@ async def move_task(interaction: Interaction, task_id: str, new_status: str) -> 
 
     await send(
         interaction,
-        f"✅ Task {task_id} ({member_name}) was moved to status '{new_status}'.",
+        f"✅ Task {task_id} ({member_name}) was moved to status '{status.to_string()}'.",
     )
 
 
@@ -104,7 +104,7 @@ async def list_tasks(interaction: Interaction) -> None:
         task_list_str = (
             "\n".join(
                 [
-                    f"- {task.id} - {task.name} (until {task.deadline}) - {await get_member_name(interaction, task)} "
+                    f"- {task.id} - {await get_member_name(interaction, task)}: {task.name} ({task.deadline}) "
                     for task in tasks
                     if task.status == status.value
                 ]
