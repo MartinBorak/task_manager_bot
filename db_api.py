@@ -50,6 +50,6 @@ def get_all_tasks() -> list[Task]:
     return [Task.from_document(document) for document in db_get_stream()]
 
 
-def get_task(task_name: str) -> Task | None:
-    document = db_get_document(task_name).get()
+def get_task(task_id: str) -> Task | None:
+    document = db_get_document(task_id).get()
     return Task.from_document(document) if document.exists else None

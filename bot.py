@@ -51,18 +51,18 @@ async def add_task(
     )
 
     await db_add_document(
-        document_id=task_name,
+        document_id=task.id,
         data=task.to_dict(),
     )
 
     await send(
         interaction,
-        f"✅ Task '{task_name}' added for {member.mention} with a deadline: {deadline}.",
+        f"✅ Task {task.id} ({task_name}) added for '{member.mention}' with a deadline: {deadline}.",
     )
 
 
 @bot.tree.command(name="movetask", description="Move a task.")
-async def move_task(interaction: Interaction, task_name: str, new_status: str) -> None:
+async def move_task(interaction: Interaction, task_id: str, new_status: str) -> None:
     status = TaskStatus.from_string(new_status)
 
     if not status:
@@ -74,7 +74,7 @@ async def move_task(interaction: Interaction, task_name: str, new_status: str) -
 
     try:
         await db_update_document(
-            document_id=task_name,
+            document_id=task_id,
             update_data={
                 "status": status.value,
             },
@@ -82,16 +82,16 @@ async def move_task(interaction: Interaction, task_name: str, new_status: str) -
     except NotFound:
         await send(
             interaction,
-            f"❌ Task '{task_name}' not found.",
+            f"❌ Task {task_id} not found.",
         )
         return
 
-    task = get_task(task_name)
+    task = get_task(task_id)
     member_name = await get_member_name(interaction, task)
 
     await send(
         interaction,
-        f"✅ Task '{task_name}' ({member_name}) moved to status '{new_status}'.",
+        f"✅ Task {task_id} ({member_name}) was moved to status '{new_status}'.",
     )
 
 
@@ -104,7 +104,7 @@ async def list_tasks(interaction: Interaction) -> None:
         task_list_str = (
             "\n".join(
                 [
-                    f"- {await get_member_name(interaction, task)}: '{task.name}' (until {task.deadline})"
+                    f"- {task.id} - {task.name} (until {task.deadline}) - {await get_member_name(interaction, task)} "
                     for task in tasks
                     if task.status == status.value
                 ]
@@ -117,21 +117,23 @@ async def list_tasks(interaction: Interaction) -> None:
 
 
 @bot.tree.command(name="removetask", description="Remove a task.")
-async def remove_task(interaction: Interaction, task_name: str) -> None:
-    task = get_task(task_name)
+async def remove_task(interaction: Interaction, task_id: str) -> None:
+    task = get_task(task_id)
 
     if not task:
         await send(
             interaction,
-            f"❌ Task '{task_name}' not found.",
+            f"❌ Task {task_id} not found.",
         )
         return
 
-    await db_delete_document(task_name)
+    await db_delete_document(task_id)
+
+    member_name = await get_member_name(interaction, task)
 
     await send(
         interaction,
-        f"🗑️ Task '{task_name}' ({await get_member_name(interaction, task)}) was removed.",
+        f"🗑️ Task {task_id} ({member_name}) was removed.",
     )
 
 
