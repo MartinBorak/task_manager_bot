@@ -76,7 +76,7 @@ async def move_task(interaction: Interaction, task_name: str, new_status: str) -
         await db_update_document(
             document_id=task_name,
             update_data={
-                "status": TaskStatus.from_string(new_status),
+                "status": status.value,
             },
         )
     except NotFound:
@@ -106,7 +106,7 @@ async def list_tasks(interaction: Interaction) -> None:
                 [
                     f"- {await get_member_name(interaction, task)}: '{task.name}' (until {task.deadline})"
                     for task in tasks
-                    if task.status == status
+                    if task.status == status.value
                 ]
             )
             or "No tasks."

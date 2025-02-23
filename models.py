@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Self
 
+from google.cloud.firestore_v1 import DocumentSnapshot
+
 from enums import TaskStatus
 
 
@@ -19,7 +21,7 @@ class Task:
         }
 
     @classmethod
-    def from_document(cls, document) -> Self:
+    def from_document(cls, document: DocumentSnapshot) -> Self:
         document_data = document.to_dict()
 
         return Task(
