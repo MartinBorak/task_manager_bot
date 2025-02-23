@@ -33,4 +33,4 @@ async def get_member(interaction: Interaction, task: Task) -> Member | None:
 
 async def get_member_name(interaction: Interaction, task: Task) -> str:
     member = await get_member(interaction, task)
-    return member.nick if member else "?"
+    return member.display_name if member else "?"
